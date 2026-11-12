@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1e293b">
+<title>معتز سات - صيانة الريسيفرات</title>
+<style>
+:root{--bg:#f1f5f9;--card:#fff;--tx:#0f172a;--mut:#475569;--pri:#2563eb;--bd:#cbd5e1;--ok:#059669;--bad:#dc2626;--hd:#1e293b;--acc:#38bdf8;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0b1220;--card:#162033;--tx:#e2e8f0;--mut:#94a3b8;--bd:#334155;--hd:#020617}}
+:root[data-theme="dark"]{--bg:#0b1220;--card:#162033;--tx:#e2e8f0;--mut:#94a3b8;--bd:#334155;--hd:#020617}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,"Segoe UI",Tahoma,Arial,sans-serif;font-size:16px;padding-bottom:76px}
+header{background:var(--hd);color:var(--acc);padding:14px 16px;font-weight:700;font-size:17px}
+main{padding:12px;max-width:640px;margin:auto}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:12px;margin-bottom:12px}
+label{display:block;font-weight:600;font-size:14px;margin:8px 0 4px}
+input,select,textarea{width:100%;padding:11px;border:1px solid var(--bd);border-radius:9px;background:var(--bg);color:var(--tx);font:inherit}
+textarea{min-height:80px}
+button{border:0;border-radius:9px;padding:11px 14px;font:inherit;font-weight:700;color:#fff;background:var(--pri);margin-top:8px}
+button.full{width:100%}.ok{background:var(--ok)}.bad{background:var(--bad)}.gray{background:#64748b}
+.row{display:flex;gap:8px}.row>*{flex:1}
+pre{white-space:pre-wrap;word-wrap:break-word;font:inherit;margin:0;line-height:1.7}
+img.board{width:100%;max-height:260px;object-fit:contain;border-radius:9px;background:var(--bg);margin-top:8px}
+.muted{color:var(--mut);font-size:14px}
+details{border-bottom:1px solid var(--bd);padding:9px 0}summary{font-weight:600}
+nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:var(--hd);padding-bottom:env(safe-area-inset-bottom,0px);z-index:5}
+nav button{flex:1;margin:0;border-radius:0;background:none;color:#94a3b8;font-size:12px;padding:10px 2px}
+nav button.on{color:var(--acc)}
+nav span{display:block;font-size:20px}
+section{display:none}section.on{display:block}
+</style>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+</head>
+<body>
+<header>🛠️ معتز سات - مساعد صيانة الريسيفرات</header>
+<main>
+
+<section id="t-diag" class="on">
+  <div class="card">
+    <label>بحث باسم الريسيفر أو رقم البوردة</label>
+    <div class="row"><input id="q" placeholder="مثال: 1506T"><button class="full" id="bSearch" style="flex:0 0 90px;margin:0">بحث</button></div>
+    <div id="addPrompt"></div>
+    <button class="full" id="bWeb" style="background:#0d9488">🌐 بحث ذكي في الويب (يحتاج مفتاح API)</button>
+    <div id="webOut" style="margin-top:8px"></div>
+    <label>1. الجهاز</label><select id="dev"></select>
+    <img id="bimg" class="board" alt="" style="display:none">
+    <div id="lnk"></div>
+    <label style="margin-top:10px">📷 إرفاق صورة البوردة</label>
+    <input type="file" id="fimg" accept="image/*">
+    <button class="full" id="bAI" style="background:#7c3aed">🤖 تحليل ذكي للصورة</button>
+    <div id="aiOut" style="margin-top:8px"></div>
+    <label>2. مظهر العطل</label><input id="fault" placeholder="مثال: اللمبة الحمراء">
+    <button class="full" id="bDiag">ابدأ الفحص الهندسي</button>
+  </div>
+  <div class="card"><pre id="res" class="muted">سيظهر التقرير هنا.</pre></div>
+</section>
+
+<section id="t-dev">
+  <div class="card"><b>إضافة جهاز جديد</b>
+    <label>اسم الجهاز</label><input id="nName">
+    <label>رقم البوردة</label><input id="nBoard">
+    <label>المعالج</label><input id="nProc">
+    <button class="ok full" id="bAddDev">حفظ الجهاز</button></div>
+  <div class="card"><b>إضافة عطل معروف للجهاز المحدد</b>
+    <div class="muted" id="curDev"></div>
+    <label>مظهر العطل</label><input id="sName">
+    <label>الجهود المتوقعة (كل سطر: الاسم=القيمة)</label><textarea id="sVolt" placeholder="VDD_5V=5.0V&#10;VDD_3V3=3.3V"></textarea>
+    <label>خطوات الإصلاح</label><textarea id="sDiag"></textarea>
+    <button class="ok full" id="bAddSym">حفظ العطل</button>
+    <button class="bad full" id="bDelDev">🗑 حذف الجهاز المحدد</button></div>
+</section>
+
+<section id="t-arc">
+  <div class="card"><b>إضافة سجل صيانة</b>
+    <label>الموديل</label><input id="aModel">
+    <label>العطل</label><input id="aFault">
+    <label>القطعة المستبدلة</label><input id="aPart">
+    <label>ملاحظات</label><textarea id="aNotes"></textarea>
+    <button class="ok full" id="bAddArc">💾 حفظ السجل</button></div>
+  <div class="card"><b>سجل الورشة</b><div id="arcList" class="muted">لا توجد سجلات بعد.</div></div>
+</section>
+
+<section id="t-lens">
+  <div class="card"><label>اختر العدسة</label><select id="lensSel"></select>
+  <pre id="lensInfo" style="margin-top:10px"></pre></div>
+</section>
+
+<section id="t-set">
+  <div class="card"><b>📲 التثبيت على الموبايل</b>
+    <pre class="muted">آيفون (Safari): زر المشاركة ثم "إضافة إلى الشاشة الرئيسية".
+أندرويد (Chrome): قائمة ⋮ ثم "إضافة إلى الشاشة الرئيسية" أو "تثبيت التطبيق".</pre></div>
+  <div class="card"><b>🧠 مزوّد التحليل الذكي للصورة</b>
+    <select id="provSel"><option value="ocr">OCR محلي مفتوح المصدر (Tesseract) - بلا مفتاح</option><option value="oss">نموذج مفتوح المصدر (واجهة OpenAI المتوافقة)</option><option value="claude">Claude (مفتاح API)</option></select>
+    <div id="ossBox" style="display:none">
+      <label>عنوان الخادم (Base URL)</label><input id="ossUrl" style="direction:ltr" placeholder="http://192.168.1.10:11434/v1">
+      <label>اسم النموذج</label><input id="ossModel" style="direction:ltr" placeholder="qwen2.5vl:7b">
+      <label>المفتاح (اختياري)</label><input id="ossKey" type="password" style="direction:ltr">
+    </div>
+    <button id="bProv" class="ok full">حفظ الاختيار</button><div id="provMsg" class="muted"></div>
+    <pre class="muted">OCR: يقرأ النص المطبوع ويطابقه مع مكتبتك (يحتاج إنترنت أول مرة لتحميل المحرك). النموذج المفتوح: يعمل مع أي خادم متوافق مثل Ollama أو LM Studio أو OpenRouter. مع Ollama شغّله بالمتغير OLLAMA_ORIGINS=* واختر نموذجاً يدعم الصور.</pre></div>
+  <div class="card"><b>🌐 تحديث المكتبة من الإنترنت</b>
+    <pre class="muted">الصق رابط ملف تحديث (https). الصيغة: JSON فيه devices وlenses، أو نص أسطر: رقم البوردة | المعالج | الذاكرة | الاسم. مثال للاستضافة: GitHub (raw) أو Google Sheets منشور كـ TSV.</pre>
+    <input id="feedUrl" style="direction:ltr" placeholder="https://raw.githubusercontent.com/.../library.json">
+    <button id="bFeed" class="ok full">🔄 تحديث الآن</button><div id="feedMsg" class="muted"></div></div>
+  <div class="card"><b>🔑 مفتاح Claude API (للنسخة المحفوظة)</b>
+    <pre class="muted">يُحفظ داخل هذا الجهاز فقط ولا يُضاف للملف. كل تحليل يُحسب على حسابك. لا تشارك هاتفك مع أحد بعد حفظه.</pre>
+    <input id="keyIn" type="password" style="direction:ltr" placeholder="sk-ant-...">
+    <div class="row"><button id="bKeySave" class="ok">حفظ</button><button id="bKeyDel" class="bad">حذف المفتاح</button></div><div id="keyMsg" class="muted"></div></div>
+  <div class="card"><b>📥 استيراد جماعي للمكتبة</b>
+    <pre class="muted">كل سطر: رقم البوردة | المعالج | الذاكرة | الاسم (اختياري)
+مثال: BOARD_X | Sunplus 1506T | SPI Flash 8MB</pre>
+    <textarea id="impTxt" style="min-height:120px;direction:ltr"></textarea>
+    <button id="bBulk" class="ok full">استيراد إلى المكتبة</button><div id="impMsg" class="muted"></div></div>
+  <div class="card"><b>💾 نسخة احتياطية</b>
+    <pre class="muted">البيانات محفوظة داخل متصفح هذا الجهاز فقط. انسخ النص أدناه واحفظه في مكان آمن (ملاحظات أو واتساب لنفسك)، ولصقه هنا لاستعادته.</pre>
+    <textarea id="bk" style="min-height:140px;direction:ltr"></textarea>
+    <div class="row"><button id="bExp" class="gray">تصدير</button><button id="bCopy" class="gray">نسخ</button><button id="bImp" class="ok">استيراد</button></div>
+    <div id="bkMsg" class="muted"></div></div>
+</section>
+</main>
+
+<nav>
+  <button data-t="diag" class="on"><span>🔍</span>تشخيص</button>
+  <button data-t="dev"><span>📟</span>الأجهزة</button>
+  <button data-t="arc"><span>📚</span>الأرشيف</button>
+  <button data-t="lens"><span>📺</span>العدسات</button>
+  <button data-t="set"><span>⚙️</span>الإعدادات</button>
+</nav>
+
+<script>
+window.onerror=function(m,u,l){var d=document.createElement('div');d.style.cssText='background:#dc2626;color:#fff;padding:10px;font-size:13px;direction:ltr';d.textContent='JS error: '+m+' (line '+l+')';document.body.insertBefore(d,document.body.firstChild)};
+</script>
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const STOP=new Set(['او','أو','في','من','على','الى','إلى','ال','لا','لم','مع','ان','أن']);
+const words=t=>new Set((t.match(/[\u0600-\u06FF\u0750-\u077Fa-zA-Z0-9_]+/g)||[]).filter(w=>w.length>1&&!STOP.has(w)));
+const DEF={"1506T_DSZ":{board:"MP1_AVL_1506T_DSZ_V5.0",proc:"Sunplus 1506T / 1507G",mem:"SPI Flash 8MB",
+ symptoms:{"اللمبة الحمراء أو اللمبة الحزينة":{volts:{"VDD_5V":"5.0V","VDD_3V3":"3.3V","VDD_1.2V":"1.2V (Core)"},
+ diag:"1. تلف مكثفات خروج دائرة الباور (خط 3.3V).\n2. مشكلة بوت وتحتاج شحن فلاشة بملف دمب أصلي عبر مبرمجة RT809H."}}}};
+const LENS=[
+["ASTRA","ريسيفرات أسترا ميني","MW650B-L","VCC -> G -> DATA -> CLK -> IR"],
+["TIMER","ريسيفرات تايمر بشاشة عرض","MW650B-L","VCC -> G -> DATA -> CLK -> IR"],
+["MONTAGE","عائلة معالجات مونتاج","FD650B-S","VCC -> G -> CLK -> DATA -> IR -> RX/TX"],
+["LM","لوحات LM الشهيرة","CT 1642","VCC -> G -> DATA -> CLK -> IR"],
+["PRIFIX سوكت شحن","بريفكس بسوكت شحن","FD650B-S","VCC -> G -> CLK -> DATA -> IR"],
+["GX-EBG","معالجات GX القوية","MW650B-L","VCC -> G -> DATA -> CLK -> IR"],
+["HELYOTECH","هيليوتك ميني","MW650B-L","VCC -> G -> DATA -> CLK -> IR"],
+["GOTO","جيتو ميني","MW650B-L","VCC -> G -> DATA -> CLK -> IR"]];
+
+function ld(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}}
+function sv(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true}catch(e){alert('تعذر الحفظ: التخزين ممتلئ أو معطل.');return false}}
+let db=ld('ms_db',null)||JSON.parse(JSON.stringify(DEF));
+let arc=ld('ms_arc',[]);
+const saveDb=()=>sv('ms_db',db), saveArc=()=>sv('ms_arc',arc);
+
+/* التنقل */
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('on',x===b));
+  document.querySelectorAll('section').forEach(s=>s.classList.toggle('on',s.id==='t-'+b.dataset.t));
+  window.scrollTo(0,0);
+});
+
+/* الأجهزة */
+function fillDev(sel){
+  const keys=Object.keys(db);
+  $('#dev').innerHTML=keys.map(k=>`<option>${esc(k)}</option>`).join('');
+  if(sel&&db[sel])$('#dev').value=sel;
+  onDev();
+}
+function onDev(){try{renderLinks()}catch(e){}
+  const k=$('#dev').value, d=db[k];
+  $('#curDev').textContent=k?('الجهاز: '+k):'لا يوجد جهاز محدد';
+  const im=$('#bimg');
+  if(d&&d.img){im.src=d.img;im.style.display='block'}else{im.removeAttribute('src');im.style.display='none'}
+}
+$('#dev').onchange=onDev;
+
+$('#bSearch').onclick=()=>{
+  const q=$('#q').value.trim(); $('#addPrompt').innerHTML=''; if(!q)return;
+  const Q=q.toUpperCase();
+  const hit=Object.keys(db).find(k=>k.toUpperCase().includes(Q)||(db[k].board&&(db[k].board.toUpperCase().includes(Q)||Q.includes(db[k].board.toUpperCase()))));
+  if(hit){fillDev(hit);const d=db[hit];
+    $('#res').textContent=`📂 تم العثور على الجهاز:\n• الموديل: ${hit}\n• رقم البوردة: ${d.board||'-'}\n• المعالج: ${d.proc||'-'}\n• الذاكرة: ${d.mem||'-'}`;}
+  else{
+    $('#addPrompt').innerHTML=`<div class="muted" style="margin-top:8px">'${esc(q)}' غير موجود. هل تريد إضافته؟</div><button class="ok full" id="yesAdd">إضافة كبوردة جديدة</button>`;
+    $('#yesAdd').onclick=()=>{db[Q]={board:q,proc:'غير محدد',symptoms:{}};if(saveDb()){fillDev(Q);$('#addPrompt').innerHTML='';$('#res').textContent='✨ تمت إضافة: '+q;}};
+  }
+};
+$('#q').addEventListener('keydown',e=>{if(e.key==='Enter')$('#bSearch').click()});
+
+/* صورة البوردة (تُصغَّر قبل الحفظ) */
+$('#fimg').onchange=e=>{
+  const f=e.target.files[0]; if(!f)return;
+  const img=new Image(),u=URL.createObjectURL(f);
+  img.onload=()=>{
+    const s=Math.min(1,700/Math.max(img.width,img.height)),c=document.createElement('canvas');
+    c.width=img.width*s;c.height=img.height*s;c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+    cur.big=img;cur.url=c.toDataURL('image/jpeg',.7);c.toBlob(function(b){cur.blob=b},'image/jpeg',.85);URL.revokeObjectURL(u);
+    showCur();
+  };
+  img.onerror=()=>alert('تعذر قراءة الصورة');img.src=u;
+};
+
+/* التشخيص */
+$('#bDiag').onclick=()=>{
+  const k=$('#dev').value,ft=$('#fault').value.trim();
+  if(!k||!ft){alert('يرجى تحديد الجهاز وكتابة العطل.');return}
+  const fw=words(ft),list=[];
+  for(const [name,s] of Object.entries(db[k].symptoms||{})){
+    const sc=[...words(name)].filter(w=>fw.has(w)).length; if(sc)list.push([sc,name,s]);
+  }
+  list.sort((a,b)=>b[0]-a[0]);
+  let r=`🤖 التقرير الهندسي:\n${'-'.repeat(30)}\n📌 الجهاز: ${k} | العطل: ${ft}\n\n`;
+  if(list.length)for(const [,n,s] of list){
+    r+=`🔍 مطابق للعطل المسجل: (${n})\n⚡ الجهود القياسية:\n`;
+    for(const [v,x] of Object.entries(s.volts||{}))r+=`   • ${v} -> ${x}\n`;
+    r+=`\n🛠️ خطوات الإصلاح:\n${s.diag||'لا توجد خطوات مسجلة'}\n\n`;
+  } else r+='ℹ️ لا يوجد عطل مطابق مسجل لهذا الجهاز. خطوط الفحص العامة:\n   • فحص جهود الباور (5V, 3.3V, 1.2V)\n   • فحص دائرة الإشارة (LNB 13V/18V)\n';
+  $('#res').className='';$('#res').textContent=r;
+};
+
+$('#bAddDev').onclick=()=>{
+  const n=$('#nName').value.trim(); if(!n){alert('اسم الجهاز مطلوب');return}
+  if(db[n]){alert('الجهاز موجود مسبقاً');return}
+  db[n]={board:$('#nBoard').value.trim(),proc:$('#nProc').value.trim()||'غير محدد',symptoms:{}};
+  if(saveDb()){['#nName','#nBoard','#nProc'].forEach(s=>$(s).value='');fillDev(n);}
+};
+$('#bAddSym').onclick=()=>{
+  const k=$('#dev').value,n=$('#sName').value.trim(); if(!k||!n){alert('حدد الجهاز واكتب مظهر العطل');return}
+  const volts={};
+  $('#sVolt').value.split('\n').forEach(l=>{const i=l.indexOf('=');if(i>0)volts[l.slice(0,i).trim()]=l.slice(i+1).trim()});
+  db[k].symptoms=db[k].symptoms||{};
+  db[k].symptoms[n]={volts,diag:$('#sDiag').value.trim()};
+  if(saveDb()){['#sName','#sVolt','#sDiag'].forEach(s=>$(s).value='');alert('تم حفظ العطل');}
+};
+$('#bDelDev').onclick=()=>{
+  const k=$('#dev').value; if(!k||!confirm('حذف الجهاز '+k+' نهائياً؟'))return;
+  delete db[k]; if(saveDb())fillDev();
+};
+
+/* الأرشيف */
+function renderArc(){
+  $('#arcList').innerHTML=arc.length?arc.map((a,i)=>`<details><summary>${esc(a.model)} - ${esc(a.fault)}</summary>
+   <div class="muted" style="margin-top:6px">القطعة: ${esc(a.part||'-')}<br>ملاحظات: ${esc(a.notes||'-')}</div>
+   <button class="bad" data-del="${i}">حذف</button></details>`).join(''):'لا توجد سجلات بعد.';
+  document.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{
+    if(confirm('حذف هذا السجل؟')){arc.splice(+b.dataset.del,1);saveArc();renderArc()}});
+}
+$('#bAddArc').onclick=()=>{
+  const m=$('#aModel').value.trim(),f=$('#aFault').value.trim();
+  if(!m||!f){alert('الموديل والعطل مطلوبان');return}
+  arc.unshift({model:m,fault:f,part:$('#aPart').value.trim(),notes:$('#aNotes').value.trim()});
+  if(saveArc()){['#aModel','#aFault','#aPart','#aNotes'].forEach(s=>$(s).value='');renderArc()}
+};
+
+/* العدسات */
+try{(JSON.parse(localStorage.getItem('ms_lens')||'[]')).forEach(function(l){LENS.push(l)})}catch(e){}
+$('#lensSel').innerHTML=LENS.map((l,i)=>`<option value="${i}">${esc(l[0])} (${esc(l[2])})</option>`).join('');
+function showLens(){const l=LENS[$('#lensSel').value];
+  $('#lensInfo').textContent=`📌 ${l[0]}\n\n• النوع: ${l[1]}\n• رقم الـ IC الأساسي: ${l[2]}\n• ترتيب الأطراف: ${l[3]}`}
+$('#lensSel').onchange=showLens;
+
+/* النسخ الاحتياطي */
+$('#bExp').onclick=()=>{$('#bk').value=JSON.stringify({db,arc});$('#bkMsg').textContent='تم التصدير. انسخ النص واحفظه.'};
+$('#bCopy').onclick=()=>{const t=$('#bk');t.select();
+  try{navigator.clipboard.writeText(t.value).then(()=>$('#bkMsg').textContent='تم النسخ.',()=>document.execCommand('copy'))}catch(e){document.execCommand('copy')}};
+$('#bImp').onclick=()=>{
+  try{const o=JSON.parse($('#bk').value);
+    if(!o||typeof o.db!=='object'||!Array.isArray(o.arc))throw 0;
+    if(!confirm('سيتم استبدال البيانات الحالية. متابعة؟'))return;
+    db=o.db;arc=o.arc;saveDb();saveArc();fillDev();renderArc();$('#bkMsg').textContent='تم الاستيراد بنجاح.';
+  }catch(e){$('#bkMsg').textContent='النص غير صالح للاستيراد.'}
+};
+
+$('#bBulk').onclick=()=>{
+  const lines=$('#impTxt').value.split('\n').map(l=>l.trim()).filter(Boolean);
+  let add=0,upd=0,skip=0;
+  lines.forEach(l=>{
+    const p=l.split(/\s*[|\t;]\s*/);
+    const board=(p[0]||'').trim(); if(!board||!p[1]){skip++;return}
+    const key=((p[3]||'').trim()||board).toUpperCase();
+    const ex=Object.keys(db).find(k=>k.toUpperCase()===key||(db[k].board||'').toUpperCase()===board.toUpperCase());
+    if(ex){db[ex].proc=p[1].trim();if(p[2])db[ex].mem=p[2].trim();upd++}
+    else{db[key]={board:board,proc:p[1].trim(),mem:(p[2]||'').trim(),symptoms:{}};add++}
+  });
+  if(add||upd){if(!saveDb())return;fillDev($('#dev').value)}
+  $('#impMsg').textContent='أضيف: '+add+' | حُدّث: '+upd+' | تُجوهل (ناقص): '+skip;
+};
+let cur={url:'',blob:null};
+let memKey='';
+function getKey(){if(memKey)return memKey;try{return localStorage.getItem('ms_key')||''}catch(e){return ''}}
+$('#bKeySave').onclick=function(){
+  const v=$('#keyIn').value.trim(); if(!v){$('#keyMsg').textContent='اكتب المفتاح أولاً.';return}
+  memKey=v; $('#keyIn').value='';
+  try{localStorage.setItem('ms_key',v);$('#keyMsg').textContent='✅ تم الحفظ على هذا الجهاز.'}
+  catch(e){$('#keyMsg').textContent='⚠️ المتصفح لا يسمح بالتخزين لهذا الملف؛ المفتاح محفوظ لهذه الجلسة فقط.'}
+};
+$('#bKeyDel').onclick=function(){memKey='';try{localStorage.removeItem('ms_key')}catch(e){}$('#keyMsg').textContent='تم حذف المفتاح.'};
+async function runKeyAI(){
+  const out=$('#aiOut'),bt=$('#bAI');
+  if(!cur.url){alert('أرفق صورة أولاً');return}
+  out.textContent='⏳ جارٍ تحليل الصورة...'; bt.disabled=true;
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
+      headers:{'content-type':'application/json','x-api-key':getKey(),'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-sonnet-5-5',max_tokens:1000,messages:[{role:'user',content:[
+        {type:'image',source:{type:'base64',media_type:'image/jpeg',data:cur.url.split(',')[1]}},
+        {type:'text',text:AI_PROMPT}]}]})});
+    const j=await res.json();
+    if(!res.ok)throw new Error((j.error&&j.error.message)||('HTTP '+res.status));
+    const t=(j.content||[]).map(function(c){return c.text||''}).join('');
+    const m=t.match(/\{[\s\S]*\}/); if(!m)throw new Error('لم تُرجع النتيجة بصيغة مفهومة');
+    renderAI(JSON.parse(m[0]));
+  }catch(e){out.textContent='تعذر التحليل: '+(e&&e.message?e.message:'خطأ في الاتصال')}
+  bt.disabled=false;
+}
+function showCur(){const im=$('#bimg');im.src=cur.url;im.style.display='block';$('#aiOut').innerHTML='<div class="muted">صورة مؤقتة: لم تُحفظ في المكتبة بعد.</div>'}
+const AI_PROMPT='أنت خبير صيانة ريسيفرات. انظر إلى صورة مذربورد ريسيفر. اقرأ فقط النصوص المطبوعة الواضحة فعلاً (رقم البوردة والتاريخ وعلامات الشرائح). لا تخمّن أبداً نصاً غير مقروء. أعد JSON فقط بهذا الشكل: {"board_number": نص أو null, "visible_text": [نصوص مقروءة], "main_chip_marking": نص أو null, "processor_guess": نص أو null, "memory_guess": نص أو null, "confidence": "high" أو "medium" أو "low", "notes": نص عربي}. ضع processor_guess فقط إن كانت علامة الشريحة مقروءة أو كان رقم البوردة معروفاً لديك بيقين، وإلا ضع null. اكتب في notes بالعربية ما هو غير مؤكد.';
+function aiErr(c){return ({not_granted:'لم تسمح للصفحة باستخدام Claude.',rate_limited:'تجاوزت الحد؛ حاول بعد قليل.',image_rejected:'تعذرت قراءة الصورة، جرّب صورة أخرى.',session_expired:'انتهت الجلسة، سجّل الدخول من جديد.'})[c]||'حدث خطأ، حاول مرة أخرى.'}
+function renderAI(r){
+  const out=$('#aiOut');
+  const conf={high:'عالية',medium:'متوسطة',low:'منخفضة'}[r.confidence]||'-';
+  out.innerHTML='<pre>🤖 نتيجة التحليل (اقتراح يحتاج تحققك):\n• رقم البوردة: '+esc(r.board_number||'غير مقروء')+'\n• علامة الشريحة الرئيسية: '+esc(r.main_chip_marking||'غير مقروءة')+'\n• المعالج المقترح: '+esc(r.processor_guess||'غير مؤكد')+'\n• الذاكرة: '+esc(r.memory_guess||'غير مؤكدة')+'\n• درجة الثقة: '+conf+'\n• نصوص مقروءة: '+esc((r.visible_text||[]).join(' / ')||'-')+'\n\n'+esc(r.notes||'')+'</pre>'+(r.board_number?'<button class="ok full" id="bSaveAI">💾 حفظ في المكتبة</button>':'');
+  const b=$('#bSaveAI'); if(!b)return;
+  b.onclick=()=>{
+    const bn=String(r.board_number).trim(),key=bn.toUpperCase();
+    const ex=Object.keys(db).find(k=>k.toUpperCase()===key||(db[k].board||'').toUpperCase()===key);
+    const k=ex||key; const d=db[k]||(db[k]={board:bn,proc:'غير محدد',symptoms:{}});
+    if(r.processor_guess&&!r.from_lib)d.proc=r.processor_guess+' (مقترح - يحتاج تحقق)';
+    if(r.memory_guess)d.mem=r.memory_guess;
+    if(cur.url)d.img=cur.url;
+    if(saveDb()){fillDev(k);$('#q').value=bn;b.textContent='✅ تم الحفظ'}
+  };
+}
+$('#bAI').onclick=function(){const pv=getProv(); if(pv==='ocr'){runOCR();return} if(pv==='oss'){runOssAI();return} if(getKey()){runKeyAI();return}$('#aiOut').textContent='⚠️ أدخل مفتاح Claude API في تبويب الإعدادات، أو افتح الصفحة من داخل Claude. التحليل غير متاح بدون أحدهما.';};
+void function(){$('#aiOut').textContent='⚠️ التحليل الذكي غير متاح هنا. يعمل فقط عند فتح الصفحة من داخل Claude (رابط claude.ai)، لا من ملف محمّل أو متصفح عادي.'};
+(async function(){
+  let sm=null; try{ if(typeof claude!=='undefined')sm=await claude.use('sample') }catch(e){}
+  if(!sm)return;
+  let lim=null; try{ lim=await sm.limits() }catch(e){}
+  if(!lim||!lim.images)return;
+  const bt=$('#bAI'); bt.style.display='block';
+  bt.onclick=async function(){
+    if(!cur.blob){alert('أرفق صورة أولاً');return}
+    $('#aiOut').textContent='⏳ جارٍ تحليل الصورة...'; bt.disabled=true;
+    try{ const r=await sm.json(AI_PROMPT,{images:[cur.blob],cache:false}); renderAI(r) }
+    catch(e){ $('#aiOut').textContent=aiErr(e&&e.code) }
+    bt.disabled=false;
+  };
+})();
+function renderLinks(){
+  const d=db[$('#dev').value]||{};
+  const L=(d.links||[]).filter(function(x){return x&&/^https?:\/\//i.test(x.url||'')});
+  $('#lnk').innerHTML=L.length?'<div class="muted" style="margin-top:8px">🔗 روابط المخططات والمصادر:</div>'+L.map(function(x){return '<div><a href="'+esc(x.url)+'" target="_blank" rel="noopener noreferrer" style="color:var(--acc)">'+esc(x.title||x.url)+'</a></div>'}).join(''):'';
+}
+function fillLens(){$('#lensSel').innerHTML=LENS.map(function(l,i){return '<option value="'+i+'">'+esc(l[0])+' ('+esc(l[2])+')</option>'}).join('');showLens()}
+async function callApi(body){
+  const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':getKey(),'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify(body)});
+  const j=await res.json(); if(!res.ok)throw new Error((j.error&&j.error.message)||('HTTP '+res.status)); return j;
+}
+function parseJ(j){const t=(j.content||[]).map(function(c){return c.text||''}).join('');const m=t.match(/\{[\s\S]*\}/);if(!m)throw new Error('لم تُرجع النتيجة بصيغة مفهومة');return JSON.parse(m[0])}
+const WEB_PROMPT='ابحث في الويب عن بوردة/ريسيفر الأقمار الصناعية التالي واستخرج معلوماته الفنية. اعتمد على نتائج البحث فقط ولا تخمّن، وضع null إن لم تجد مصدراً موثوقاً. أعد JSON فقط بهذا الشكل: {"name": نص أو null, "board_number": نص أو null, "processor": نص أو null, "memory": نص أو null, "lens_ic": نص أو null, "schematic_links": [{"title": نص, "url": رابط}], "confidence": "high" أو "medium" أو "low", "notes": ملاحظات بالعربية}. الاستعلام: ';
+function renderWeb(r,src,q){
+  const out=$('#webOut');
+  const sl=(r.schematic_links||[]).filter(function(x){return x&&/^https?:\/\//i.test(x.url||'')}).slice(0,5);
+  const lk=function(a){return a.map(function(x){return '<div><a href="'+esc(x.url)+'" target="_blank" rel="noopener noreferrer" style="color:var(--acc)">'+esc(x.title||x.url)+'</a></div>'}).join('')};
+  out.innerHTML='<pre>🌐 نتيجة البحث (اقتراح يحتاج تحققك):\n• الاسم: '+esc(r.name||'-')+'\n• رقم البوردة: '+esc(r.board_number||'-')+'\n• المعالج: '+esc(r.processor||'غير مؤكد')+'\n• الذاكرة: '+esc(r.memory||'غير مؤكدة')+'\n• IC العدسة: '+esc(r.lens_ic||'-')+'\n• الثقة: '+esc(r.confidence||'-')+'\n\n'+esc(r.notes||'')+'</pre>'+(sl.length?'<div class="muted">المخططات:</div>'+lk(sl):'')+(src.length?'<div class="muted" style="margin-top:6px">المصادر:</div>'+lk(src):'')+'<button class="ok full" id="bSaveWeb">💾 حفظ في المكتبة</button>';
+  $('#bSaveWeb').onclick=function(){
+    const key=String(r.board_number||r.name||q).trim().toUpperCase();
+    const d=db[key]||(db[key]={board:r.board_number||q,proc:'غير محدد',symptoms:{}});
+    if(r.processor)d.proc=r.processor+' (من الويب - يحتاج تحقق)';
+    if(r.memory)d.mem=r.memory;
+    if(sl.length)d.links=sl;
+    if(saveDb()){fillDev(key);this.textContent='✅ تم الحفظ'}
+  };
+}
+$('#bWeb').onclick=async function(){
+  const q=$('#q').value.trim(),out=$('#webOut'),bt=this;
+  if(!q){out.textContent='اكتب اسم الريسيفر أو رقم البوردة في خانة البحث أولاً.';return}
+  if(!getKey()){out.textContent='⚠️ يحتاج مفتاح Claude API (تبويب الإعدادات)، ويعمل من النسخة المحفوظة فقط وليس من داخل صفحة claude.ai.';return}
+  out.textContent='⏳ جارٍ البحث في الويب...'; bt.disabled=true;
+  try{
+    const j=await callApi({model:'claude-sonnet-5-5',max_tokens:2000,tools:[{type:'web_search_20250305',name:'web_search',max_uses:5}],messages:[{role:'user',content:WEB_PROMPT+q}]});
+    const r=parseJ(j),src=[];
+    (j.content||[]).forEach(function(c){if(c.type==='web_search_tool_result'&&Array.isArray(c.content))c.content.forEach(function(x){if(x.url&&/^https?:\/\//i.test(x.url)&&src.length<6)src.push({title:x.title,url:x.url})})});
+    renderWeb(r,src,q);
+  }catch(e){out.textContent='تعذر البحث: '+(e&&e.message?e.message:'خطأ في الاتصال')}
+  bt.disabled=false;
+};
+try{$('#feedUrl').value=localStorage.getItem('ms_feed')||''}catch(e){}
+$('#bFeed').onclick=async function(){
+  const u=$('#feedUrl').value.trim(),m=$('#feedMsg'),bt=this;
+  if(!/^https:\/\//i.test(u)){m.textContent='أدخل رابطاً يبدأ بـ https://';return}
+  try{localStorage.setItem('ms_feed',u)}catch(e){}
+  m.textContent='⏳ جارٍ التحديث...'; bt.disabled=true;
+  try{
+    const res=await fetch(u); if(!res.ok)throw new Error('HTTP '+res.status);
+    const t=await res.text(); let o=null; try{o=JSON.parse(t)}catch(e){}
+    if(o&&typeof o==='object'&&!Array.isArray(o)){
+      let add=0,upd=0,ln=0; const D=o.devices||{};
+      Object.keys(D).forEach(function(k){
+        const v=D[k]||{},key=k.toUpperCase(),ex=db[key]||db[k];
+        if(ex){if(v.proc)ex.proc=v.proc;if(v.mem)ex.mem=v.mem;if(v.board)ex.board=v.board;if(Array.isArray(v.links))ex.links=v.links;upd++}
+        else{db[key]={board:v.board||k,proc:v.proc||'غير محدد',mem:v.mem||'',links:Array.isArray(v.links)?v.links:[],symptoms:{}};add++}
+      });
+      const sl=ld('ms_lens',[]);
+      (o.lenses||[]).forEach(function(l){if(Array.isArray(l)&&l.length>=4&&!LENS.some(function(x){return x[0]===String(l[0])})){const a=l.slice(0,4).map(String);LENS.push(a);sl.push(a);ln++}});
+      sv('ms_lens',sl); saveDb(); fillDev($('#dev').value); fillLens();
+      m.textContent='✅ أضيف: '+add+' | حُدّث: '+upd+' | عدسات جديدة: '+ln;
+    } else {
+      $('#impTxt').value=t; $('#bBulk').click(); m.textContent='✅ '+$('#impMsg').textContent;
+    }
+  }catch(e){m.textContent='تعذر التحديث: '+(e&&e.message?e.message:'خطأ')+' (قد يمنع الموقع الوصول من المتصفح)'}
+  bt.disabled=false;
+};
+let memProv={};
+function provCfg(){if(memProv.prov)return memProv;try{return JSON.parse(localStorage.getItem('ms_prov')||'{}')||{}}catch(e){return {}}}
+function getProv(){const c=provCfg();return c.prov||(getKey()?'claude':'ocr')}
+(function(){const c=provCfg();$('#provSel').value=c.prov||'ocr';$('#ossUrl').value=c.url||'';$('#ossModel').value=c.model||'';$('#ossKey').value=c.key||'';$('#ossBox').style.display=$('#provSel').value==='oss'?'block':'none'})();
+$('#provSel').onchange=function(){$('#ossBox').style.display=this.value==='oss'?'block':'none'};
+$('#bProv').onclick=function(){
+  memProv={prov:$('#provSel').value,url:$('#ossUrl').value.trim(),model:$('#ossModel').value.trim(),key:$('#ossKey').value.trim()};
+  try{localStorage.setItem('ms_prov',JSON.stringify(memProv));$('#provMsg').textContent='✅ تم الحفظ.'}catch(e){$('#provMsg').textContent='⚠️ محفوظ لهذه الجلسة فقط.'}
+};
+async function runOssAI(){
+  const c=provCfg(),out=$('#aiOut'),bt=$('#bAI');
+  if(!cur.url){alert('أرفق صورة أولاً');return}
+  if(!c.url||!c.model){out.textContent='⚠️ أدخل عنوان الخادم واسم النموذج في الإعدادات.';return}
+  out.textContent='⏳ جارٍ التحليل...'; bt.disabled=true;
+  try{
+    const h={'content-type':'application/json'}; if(c.key)h.authorization='Bearer '+c.key;
+    const res=await fetch(c.url.replace(/\/+$/,'')+'/chat/completions',{method:'POST',headers:h,body:JSON.stringify({model:c.model,temperature:0,max_tokens:1000,messages:[{role:'user',content:[{type:'text',text:AI_PROMPT},{type:'image_url',image_url:{url:cur.url}}]}]})});
+    const j=await res.json();
+    if(!res.ok)throw new Error(String((j.error&&(j.error.message||j.error))||('HTTP '+res.status)));
+    const t=(j.choices&&j.choices[0]&&j.choices[0].message&&j.choices[0].message.content)||'';
+    const m=String(t).match(/\{[\s\S]*\}/); if(!m)throw new Error('لم يُرجع النموذج نتيجة بصيغة مفهومة');
+    renderAI(JSON.parse(m[0]));
+  }catch(e){out.textContent='تعذر التحليل: '+(e&&e.message?e.message:'خطأ في الاتصال')}
+  bt.disabled=false;
+}
+function norm(s){return String(s||'').toUpperCase().replace(/[^A-Z0-9]/g,'')}
+function lev(a,b){const m=a.length,n=b.length;if(!m)return n;if(!n)return m;let p=[];for(let j=0;j<=n;j++)p[j]=j;for(let i=1;i<=m;i++){const c=[i];for(let j=1;j<=n;j++)c[j]=Math.min(p[j]+1,c[j-1]+1,p[j-1]+(a[i-1]===b[j-1]?0:1));p=c}return p[n]}
+function matchLib(text){
+  const N=norm(text),toks=(String(text).toUpperCase().match(/[A-Z0-9][A-Z0-9_.\-\/]{3,}/g)||[]).map(norm).filter(function(t){return t.length>=5});
+  let best={k:null,s:0};
+  Object.keys(db).forEach(function(k){
+    [k,db[k].board].forEach(function(b){
+      const B=norm(b); if(B.length<5)return;
+      let s=0;
+      if(N.includes(B))s=1;
+      else toks.forEach(function(t){
+        if(t.length>=6&&B.includes(t))s=Math.max(s,.85);
+        s=Math.max(s,1-lev(t,B)/Math.max(t.length,B.length));
+      });
+      if(s>best.s)best={k:k,s:s};
+    });
+  });
+  return best;
+}
+function prepCanvas(img,ang){
+  const s=Math.min(1,1800/Math.max(img.width,img.height)),w=img.width*s,h=img.height*s,c=document.createElement('canvas'),q=ang%180!==0;
+  c.width=q?h:w;c.height=q?w:h;const x=c.getContext('2d');
+  try{x.filter='grayscale(1) contrast(1.5)'}catch(e){}
+  x.translate(c.width/2,c.height/2);x.rotate(ang*Math.PI/180);x.drawImage(img,-w/2,-h/2,w,h);return c;
+}
+async function loadTess(){
+  if(window.Tesseract)return;
+  await new Promise(function(res,rej){const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';s.onload=res;s.onerror=function(){rej(new Error('تعذر تحميل محرك OCR (يحتاج إنترنت أول مرة)'))};document.head.appendChild(s)});
+}
+async function runOCR(){
+  const out=$('#aiOut'),bt=$('#bAI');
+  if(!cur.big){alert('أرفق صورة أولاً');return}
+  bt.disabled=true; out.textContent='⏳ تحميل محرك OCR (أول مرة يحتاج إنترنت)...';
+  let w=null;
+  try{
+    await loadTess(); w=await Tesseract.createWorker('eng');
+    const texts=[]; let best={k:null,s:0};
+    for(const ang of [0,90,270,180]){
+      out.textContent='⏳ قراءة النص... (زاوية '+ang+'°)';
+      const r=await w.recognize(prepCanvas(cur.big,ang)); texts.push(r.data.text||'');
+      best=matchLib(texts.join('\n')); if(best.s>=.9)break;
+    }
+    const toks=(texts.join('\n').toUpperCase().match(/[A-Z0-9][A-Z0-9_.\-\/]{3,}/g)||[]);
+    const cand=toks.filter(function(t){return /[A-Z]/.test(t)&&/\d/.test(t)}).sort(function(a,b){return b.length-a.length})[0]||null;
+    const hit=best.s>=.7&&best.k?db[best.k]:null;
+    if(hit)fillDev(best.k);
+    renderAI({board_number:hit?(hit.board||best.k):cand,visible_text:toks.slice(0,12),main_chip_marking:null,processor_guess:hit?hit.proc:null,memory_guess:hit?(hit.mem||null):null,from_lib:!!hit,confidence:best.s>=.9?'high':best.s>=.7?'medium':'low',
+      notes:hit?('تطابق مع «'+best.k+'» في مكتبتك (نسبة '+Math.round(best.s*100)+'%). OCR لا يقرأ الشريحة نفسها، فتحقق من المعالج.'):'لم يُطابق أي جهاز في مكتبتك. نص OCR قد يحتوي أخطاء، ويُقترح أطول رقم يجمع حروفاً وأرقاماً كرقم بوردة.'});
+  }catch(e){out.textContent='تعذر التحليل: '+(e&&e.message?e.message:'خطأ')}
+  try{if(w)await w.terminate()}catch(e){}
+  bt.disabled=false;
+}
+fillDev();renderArc();showLens();
+</script>
+<script>if('serviceWorker' in navigator&&/^https?:/.test(location.protocol)){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){})})}</script>
+</body>
+</html>
