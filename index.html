@@ -45,7 +45,7 @@ section{display:none}section.on{display:block}
     <label>بحث باسم الريسيفر أو رقم البوردة</label>
     <div class="row"><input id="q" placeholder="مثال: 1506T"><button class="full" id="bSearch" style="flex:0 0 90px;margin:0">بحث</button></div>
     <div id="addPrompt"></div>
-    <button class="full" id="bWeb" style="background:#0d9488">🌐 بحث ذكي في الويب (يحتاج مفتاح API)</button>
+    <button class="full" id="bWeb" style="background:#0d9488">🌐 بحث ذكي في الويب (بلا مفتاح)</button>
     <div id="webOut" style="margin-top:8px"></div>
     <div class="muted" style="margin-top:8px">🔎 ابحث في محركات البحث عن ما كتبته:</div>
     <div id="eng" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
@@ -55,12 +55,22 @@ section{display:none}section.on{display:block}
       <button class="gray" data-e="i" style="margin:0;padding:8px 10px;font-size:13px">صور</button>
       <button class="gray" data-e="y" style="margin:0;padding:8px 10px;font-size:13px">يوتيوب</button>
       <button class="gray" data-e="m" style="margin:0;padding:8px 10px;font-size:13px">مصراوي سات</button>
-      <button class="gray" data-e="f" style="margin:0;padding:8px 10px;font-size:13px">الفرية</button>
+      <button class="gray" data-e="f" style="margin:0;padding:8px 10px;font-size:13px">القرية</button>
+      <button class="gray" data-e="e" style="margin:0;padding:8px 10px;font-size:13px">مصريين سات</button>
+      <button class="gray" data-e="a" style="margin:0;padding:8px 10px;font-size:13px">عمالقة السات</button>
     </div>
     <div id="srcLinks"></div>
-    <label>1. الجهاز</label><select id="dev"></select>
+    <label>1. الجهاز: اكتب الاسم أو رقم البوردة يدوياً (أو اختر)</label>
+    <input id="devIn" list="devList" placeholder="مثال: Truman TM HD-3 أو 5810L681L06" autocomplete="off">
+    <datalist id="devList"></datalist>
+    <div id="devChips" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px"></div>
+    <select id="dev" style="display:none"></select>
+    <div class="row" style="margin-top:8px"><input id="qBoard" placeholder="رقم البوردة" style="direction:ltr"><input id="qProc" placeholder="المعالج" style="direction:ltr"></div>
+    <div class="row" style="margin-top:6px"><input id="qMem" placeholder="الذاكرة" style="direction:ltr"><button id="bDevSave" class="ok" style="margin:0">💾 حفظ الجهاز</button></div>
     <div id="devInfo" class="muted" style="margin-top:6px"></div>
     <div id="wsMem" class="muted" style="margin-top:4px"></div>
+    <div id="kin" class="muted" style="margin-top:6px"></div>
+    <div id="wsImgs"></div>
     <img id="bimg" class="board" alt="" style="display:none">
     <div id="lnk"></div>
     <label style="margin-top:10px">📷 إرفاق صورة البوردة</label>
@@ -80,6 +90,16 @@ section{display:none}section.on{display:block}
     <label>رقم البوردة</label><input id="nBoard">
     <label>المعالج</label><input id="nProc">
     <button class="ok full" id="bAddDev">حفظ الجهاز</button></div>
+  <div class="card"><b>✏️ تعديل الجهاز المحدد (اسم/بوردة/معالج/ذاكرة)</b>
+    <label>اسم الجهاز</label><input id="eName">
+    <label>رقم البوردة</label><input id="eBoard" style="direction:ltr">
+    <label>المعالج</label><input id="eProc" style="direction:ltr">
+    <label>الذاكرة</label><input id="eMem" style="direction:ltr">
+    <label>IC الفلاش</label><input id="eFlash" style="direction:ltr">
+    <label>IC الباور</label><input id="ePower" style="direction:ltr">
+    <label>IC الإشارة</label><input id="eSig" style="direction:ltr">
+    <label>ICs أخرى (رقم + وظيفة)</label><input id="eOther">
+    <button class="ok full" id="bEditSave">حفظ التعديل</button></div>
   <div class="card"><b>إضافة عطل معروف للجهاز المحدد</b>
     <div class="muted" id="curDev"></div>
     <label>مظهر العطل</label><input id="sName">
@@ -95,6 +115,8 @@ section{display:none}section.on{display:block}
     <label>العطل</label><input id="aFault">
     <label>القطعة المستبدلة</label><input id="aPart">
     <label>ملاحظات</label><textarea id="aNotes"></textarea>
+    <label>📷 صورة الريسيفر</label><input type="file" id="aImg" accept="image/*">
+    <label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="aUseCur" style="width:auto" checked> إرفاق صورة التشخيص الحالية إن وُجدت</label>
     <button class="ok full" id="bAddArc">💾 حفظ السجل</button></div>
   <div class="card"><b>سجل الورشة</b><div id="arcList" class="muted">لا توجد سجلات بعد.</div></div>
 </section>
@@ -120,7 +142,11 @@ section{display:none}section.on{display:block}
     <div class="muted" id="mapDev" style="margin-top:6px"></div>
     <input id="markTxt" placeholder="اسم النقطة (مثال: 3.3V) ثم المس مكانها في الصورة">
     <div id="mapWrap" style="position:relative;margin-top:8px;line-height:0"></div>
+    <pre id="mapSum" class="muted" style="margin-top:8px"></pre>
+    <div id="mapRows"></div>
     <button class="gray full" id="bMapUse">استخدم الصورة المرفقة للجهاز</button>
+    <button class="full" id="bCam" style="background:#0d9488">🎥 افتح الكاميرا مع الطبقة الشفافة</button>
+    <button class="gray full" id="bMapClear">🧹 قياسات جديدة (مسح المقاسة فقط)</button>
     <div class="muted" style="margin-top:6px">المس علامة لحذفها.</div>
   </details>
   <details class="card" style="padding:12px"><summary><b>🧾 فاتورة وضمان (واتساب)</b></summary>
@@ -135,6 +161,12 @@ section{display:none}section.on{display:block}
     <button class="full" id="bIvMake">توليد الرسالة</button>
     <textarea id="ivMsg" style="min-height:140px"></textarea>
     <div class="row"><button class="ok" id="bIvWa">إرسال واتساب</button><button class="gray" id="bIvCopy">نسخ</button></div>
+  </details>
+  <details class="card" style="padding:12px"><summary><b>🔬 محلل الشرائح (بلا مفتاح)</b></summary>
+    <div class="muted" style="margin-top:6px">الصق أي نص (من نتائج Google أو موقع أو مواصفات) أو اكتب علامات الشرائح، وأستخرج المعالجات والذاكرة المعروفة.</div>
+    <textarea id="chipTxt" style="direction:ltr;min-height:110px" placeholder="GX6605S  W25Q32 ..."></textarea>
+    <button class="full" id="bChip">حلّل النص</button>
+    <div id="chipOut" style="margin-top:8px"></div>
   </details>
 </section>
 
@@ -176,6 +208,15 @@ section{display:none}section.on{display:block}
 </section>
 </main>
 
+<div id="camBox" style="position:fixed;left:0;right:0;top:0;bottom:0;background:#000;z-index:50;display:none">
+  <video id="camV" playsinline autoplay muted style="position:absolute;left:0;top:0;width:100%;height:100%;object-fit:cover"></video>
+  <div id="camOv" style="position:absolute;left:50%;top:50%;width:80%;touch-action:none;transform:translate(-50%,-50%)"></div>
+  <div style="position:absolute;left:0;right:0;top:0;padding:calc(8px + env(safe-area-inset-top,0px)) 12px 8px;background:rgba(2,6,23,.7);color:#fff;font-size:13px">اسحب الصورة وكبّرها لتنطبق على البوردة، ثم اقرأ مكان كل نقطة وقيمتها السليمة (≈).</div>
+  <div style="position:absolute;left:0;right:0;bottom:0;padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px));background:rgba(2,6,23,.85);color:#fff;font-size:13px">
+    الشفافية <input type="range" id="camOp" min="10" max="90" value="40" style="padding:0">
+    الحجم <input type="range" id="camSc" min="30" max="250" value="100" style="padding:0">
+    <div class="row"><button id="camRot" class="gray">↻ تدوير</button><button id="camX" class="bad">✕ إغلاق</button></div>
+  </div></div>
 <nav>
   <button data-t="diag" class="on"><span>🔍</span>تشخيص</button>
   <button data-t="dev"><span>📟</span>الأجهزة</button>
@@ -241,8 +282,8 @@ $('#bSearch').onclick=()=>{
   if(hit){fillDev(hit);const d=db[hit];
     $('#res').textContent=`📂 تم العثور على الجهاز:\n• الموديل: ${hit}\n• رقم البوردة: ${d.board||'-'}\n• المعالج: ${d.proc||'-'}\n• الذاكرة: ${d.mem||'-'}`;}
   else{
-    $('#addPrompt').innerHTML=`<div class="muted" style="margin-top:8px">'${esc(q)}' غير موجود. هل تريد إضافته؟</div><input id="nProcQ" placeholder="المعالج (إن كنت تعرفه)" style="margin-top:8px"><input id="nMemQ" placeholder="الذاكرة (اختياري)" style="margin-top:6px"><button class="ok full" id="yesAdd">إضافة كبوردة جديدة</button>`;
-    $('#yesAdd').onclick=()=>{db[Q]={board:q,proc:($('#nProcQ').value.trim()||'غير محدد'),mem:$('#nMemQ').value.trim(),symptoms:{}};if(saveDb()){fillDev(Q);$('#addPrompt').innerHTML='';$('#res').textContent='✨ تمت إضافة: '+q;}};
+    $('#addPrompt').innerHTML=`<div class="muted" style="margin-top:8px">'${esc(q)}' غير موجود. هل تريد إضافته؟</div><input id="nNameQ" placeholder="اسم الريسيفر (مثال: Truman TM HD-3) - اختياري" style="margin-top:8px"><input id="nProcQ" placeholder="المعالج (إن كنت تعرفه)" style="margin-top:8px"><input id="nMemQ" placeholder="الذاكرة (اختياري)" style="margin-top:6px"><button class="ok full" id="yesAdd">إضافة كبوردة جديدة</button>`;
+    $('#yesAdd').onclick=()=>{const NK=($('#nNameQ').value.trim()||Q).toUpperCase();db[NK]={board:q,proc:($('#nProcQ').value.trim()||'غير محدد'),mem:$('#nMemQ').value.trim(),symptoms:{}};if(saveDb()){fillDev(NK);$('#addPrompt').innerHTML='';$('#res').textContent='✨ تمت إضافة: '+q;}};
   }
 };
 $('#q').addEventListener('keydown',e=>{if(e.key==='Enter')$('#bSearch').click()});
@@ -275,7 +316,7 @@ $('#bDiag').onclick=()=>{
     for(const [v,x] of Object.entries(s.volts||{}))r+=`   • ${v} -> ${x}\n`;
     r+=`\n🛠️ خطوات الإصلاح:\n${s.diag||'لا توجد خطوات مسجلة'}\n\n`;
   } else r+='ℹ️ لا يوجد عطل مطابق مسجل لهذا الجهاز. خطوط الفحص العامة:\n   • فحص جهود الباور (5V, 3.3V, 1.2V)\n   • فحص دائرة الإشارة (LNB 13V/18V)\n';
-  $('#res').className='';$('#res').textContent=r+wsText(k,ft);
+  $('#res').className='';$('#res').textContent=r+kinText(k,ft)+wsText(k,ft);
 };
 
 $('#bAddDev').onclick=()=>{
@@ -300,7 +341,7 @@ $('#bDelDev').onclick=()=>{
 /* الأرشيف */
 function renderArc(){
   $('#arcList').innerHTML=arc.length?arc.map((a,i)=>`<details><summary>${esc(a.model)} - ${esc(a.fault)}</summary>
-   <div class="muted" style="margin-top:6px">القطعة: ${esc(a.part||'-')}<br>ملاحظات: ${esc(a.notes||'-')}</div>
+   <div class="muted" style="margin-top:6px">القطعة: ${esc(a.part||'-')}<br>ملاحظات: ${esc(a.notes||'-')}${a.ics?'<br>ICs: '+esc(a.ics):''}${a.date?'<br>التاريخ: '+new Date(a.date).toLocaleDateString('ar-EG'):''}</div>${a.img?'<img src="'+esc(a.img)+'" style="width:100%;max-height:300px;object-fit:contain;border-radius:9px;margin-top:8px">':''}
    <button class="bad" data-del="${i}">حذف</button></details>`).join(''):'لا توجد سجلات بعد.';
   document.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{
     if(confirm('حذف هذا السجل؟')){arc.splice(+b.dataset.del,1);saveArc();renderArc()}});
@@ -374,7 +415,7 @@ async function runKeyAI(){
   bt.disabled=false;
 }
 function showCur(){const im=$('#bimg');im.src=cur.url;im.style.display='block';$('#aiOut').innerHTML='<div class="muted">صورة مؤقتة: لم تُحفظ في المكتبة بعد.</div>'}
-const AI_PROMPT='أنت خبير صيانة ريسيفرات. انظر إلى صورة مذربورد ريسيفر. اقرأ فقط النصوص المطبوعة الواضحة فعلاً (رقم البوردة والتاريخ وعلامات الشرائح). لا تخمّن أبداً نصاً غير مقروء. أعد JSON فقط بهذا الشكل: {"board_number": نص أو null, "visible_text": [نصوص مقروءة], "main_chip_marking": نص أو null, "processor_guess": نص أو null, "memory_guess": نص أو null, "confidence": "high" أو "medium" أو "low", "notes": نص عربي}. ضع processor_guess فقط إن كانت علامة الشريحة مقروءة أو كان رقم البوردة معروفاً لديك بيقين، وإلا ضع null. اكتب في notes بالعربية ما هو غير مؤكد.';
+const AI_PROMPT='أنت خبير صيانة ريسيفرات. انظر إلى صورة مذربورد ريسيفر. اقرأ فقط النصوص المطبوعة الواضحة فعلاً على البوردة والشرائح، ولا تخمّن أبداً نصاً غير مقروء. المطلوب: رقم البوردة، ورقم IC الفلاش (ذاكرة SPI مثل W25Q32)، ورقم IC الباور (منظم الجهد أو محول التغذية)، ورقم IC الإشارة (التيونر أو المفكك DVB-S2 مثل M88DS3103 أو AVL6211 أو دائرة تغذية LNB)، والمعالج الرئيسي، وأي IC آخر ظاهر مع رقمه ووظيفته (رام، صوت، درايفر شاشة LED، إلخ). أعد JSON فقط بهذا الشكل: {"board_number": نص أو null, "flash_ic": نص أو null, "power_ic": نص أو null, "signal_ic": نص أو null, "main_chip_marking": نص أو null, "processor_guess": نص أو null, "memory_guess": نص أو null, "other_ics": [{"marking": نص, "role": نص}], "visible_text": [نصوص مقروءة], "confidence": "high" أو "medium" أو "low", "notes": ملاحظات بالعربية}. ضع null لأي حقل غير مقروء. لا تضف أي IC غير ظاهر في الصورة.';
 function aiErr(c){return ({not_granted:'لم تسمح للصفحة باستخدام Claude.',rate_limited:'تجاوزت الحد؛ حاول بعد قليل.',image_rejected:'تعذرت قراءة الصورة، جرّب صورة أخرى.',session_expired:'انتهت الجلسة، سجّل الدخول من جديد.'})[c]||'حدث خطأ، حاول مرة أخرى.'}
 function renderAI(r){
   const out=$('#aiOut');
@@ -561,11 +602,11 @@ function showSrc(q){
 }
 $('#bSearch').addEventListener('click',function(){const q=$('#q').value.trim();if(q)showSrc(q)});
 function showInfo(){const d=db[$('#dev').value];$('#devInfo').textContent=d?('🔧 المعالج: '+(d.proc||'-')+' | الذاكرة: '+(d.mem||'-')+' | البوردة: '+(d.board||'-')):''}
-const ENG={g:'https://www.google.com/search?q=',b:'https://www.bing.com/search?q=',d:'https://duckduckgo.com/?q=',i:'https://www.google.com/search?tbm=isch&q=',y:'https://www.youtube.com/results?search_query=',m:'https://www.google.com/search?q=',f:'https://www.google.com/search?q='};
+const ENG={g:'https://www.google.com/search?q=',b:'https://www.bing.com/search?q=',d:'https://duckduckgo.com/?q=',i:'https://www.google.com/search?tbm=isch&q=',y:'https://www.youtube.com/results?search_query=',m:'https://www.google.com/search?q=',f:'https://www.google.com/search?q=',e:'https://www.google.com/search?q=',a:'https://www.google.com/search?q='};
 document.querySelectorAll('[data-e]').forEach(function(b){b.onclick=function(){
   const q=$('#q').value.trim()||$('#dev').value; if(!q){alert('اكتب اسم الريسيفر أو رقم البوردة أولاً');return}
   const e=b.dataset.e;
-  const extra=({y:' receiver repair',m:' مصراوي سات',f:' الفرية الالكترونية'})[e]||' satellite receiver board processor flash schematic';
+  const extra=({y:' receiver repair',m:' مصراوي سات',f:' القرية الالكترونية',e:' مصريين سات',a:' عمالقة السات'})[e]||' satellite receiver board processor flash schematic';
   window.open(ENG[e]+encodeURIComponent(q+extra),'_blank','noopener');
 }});
 (function(){const o=showCur;showCur=function(){o();try{if(getProv()==='ocr'&&!window.claude)setTimeout(runOCR,300)}catch(e){}}})();
@@ -722,6 +763,275 @@ $('#bIvWa').onclick=function(){
   window.open('https://wa.me/'+ph+'?text='+encodeURIComponent(m),'_blank','noopener')};
 $('#bIvCopy').onclick=function(){const t=$('#ivMsg');t.select();try{navigator.clipboard.writeText(t.value)}catch(e){document.execCommand('copy')}};
 treeRender();
+
+/* ===== بحث ذكي بلا مفتاح + محلل الشرائح + تعديل الجهاز ===== */
+const CHIPS={
+ 'GX6605S':'NationalChip (Goke) GX6605S: معالج شائع في ريسيفرات HD الاقتصادية',
+ 'HI3798':'HiSilicon Hi3798: معالج لأجهزة الاستقبال والصناديق عالية الأداء',
+ 'HI3796':'HiSilicon Hi3796: من عائلة Hi379x لأجهزة الاستقبال',
+ 'HI3716':'HiSilicon Hi3716: معالج ريسيفرات قديم نسبياً',
+ 'M3329E':'ALi M3329E: معالج ريسيفرات DVB-S2',
+ 'STI5105':'STMicroelectronics STi5105: معالج ريسيفرات SD/HD قديم',
+ 'STI5197':'STMicroelectronics STi5197: معالج ريسيفرات',
+ '1506T':'Sunplus 1506T: معالج ريسيفرات ميني',
+ '1507G':'Sunplus 1507G: من عائلة 1506',
+ 'M88DS3103':'Montage M88DS3103: مفكك إشارة DVB-S2 (Demodulator)',
+ 'M88TS2022':'Montage M88TS2022: تيونر (Tuner)',
+ 'M88RS6000':'Montage M88RS6000: مفكك وتيونر DVB-S2 مدمجان',
+ 'AVL6211':'Availink AVL6211: مفكك وتيونر DVB-S2',
+ 'LNBH26':'STMicroelectronics LNBH26: مغذّي LNB (13/18V)',
+ 'LNBH25':'STMicroelectronics LNBH25: مغذّي LNB',
+ 'A8304':'Allegro A8304: منظم تغذية LNB',
+ 'A8300':'Allegro A8300: منظم تغذية LNB'
+};
+function extractChips(text){
+  const T=String(text).toUpperCase(),procs={},mems={};
+  Object.keys(CHIPS).forEach(function(k){if(/^(GX|HI3)/.test(k))return;const n=(T.match(new RegExp('(^|[^A-Z0-9])'+k+'(?![A-Z0-9])','g'))||[]).length;if(n)procs[k]=n});
+  (T.match(/(^|[^A-Z0-9])(GX\d{4}[A-Z0-9]{0,3}|HI3\d{3}[A-Z0-9]{0,6})(?![A-Z0-9])/g)||[]).forEach(function(m){const k=m.replace(/^[^A-Z0-9]/,''),base=Object.keys(CHIPS).find(function(c){return k.indexOf(c)===0}),kk=base||k;procs[kk]=(procs[kk]||0)+1});
+  const re=/(W25Q|MX25L|GD25Q|EN25Q|EN25F|FM25Q|XM25Q|P25Q|BY25Q)(\d{2,5})/g;let m;
+  while((m=re.exec(T))){const d=m[2];const mb=d.indexOf('128')===0?128:(d.indexOf('256')===0?256:({'80':8,'40':4,'20':2,'10':1}[d.slice(0,2)]||parseInt(d.slice(0,2))));
+    if(mb){const lab='SPI Flash '+(mb/8)+'MB';mems[lab]=(mems[lab]||0)+1}}
+  return {procs:procs,mems:mems}}
+function applyField(f,v){const k=$('#dev').value,d=db[k];if(!d){alert('حدد جهازاً أولاً');return}
+  if(f==='proc')d.proc=v+' (مقترح - يحتاج تحقق)';else d.mem=v;if(saveDb())fillDev(k)}
+function showCands(el,text,head,extra){
+  const r=extractChips(text),P=Object.keys(r.procs).sort(function(a,b){return r.procs[b]-r.procs[a]}).slice(0,4),M=Object.keys(r.mems).sort(function(a,b){return r.mems[b]-r.mems[a]}).slice(0,2);
+  let h='<pre>'+esc(head)+'\nالجهاز المحدد: '+esc($('#dev').value||'-')+'</pre>';
+  if(!P.length&&!M.length)h+='<div class="muted">لم أجد معالجاً أو ذاكرة معروفة في هذا النص.</div>';
+  P.forEach(function(k){h+='<div class="muted" style="margin-top:6px">'+esc(k)+' (ظهر '+r.procs[k]+' مرة)'+(CHIPS[k]?': '+esc(CHIPS[k]):'')+'</div><button class="ok full" data-ap="'+esc(k)+'">اعتمد '+esc(k)+' كمعالج</button>'});
+  M.forEach(function(k){h+='<button class="ok full" data-am="'+esc(k)+'">اعتمد الذاكرة: '+esc(k)+'</button>'});
+  el.innerHTML=h+(extra||'');
+  el.querySelectorAll('[data-ap]').forEach(function(b){b.onclick=function(){applyField('proc',b.dataset.ap)}});
+  el.querySelectorAll('[data-am]').forEach(function(b){b.onclick=function(){applyField('mem',b.dataset.am)}});
+}
+$('#bChip').onclick=function(){const t=$('#chipTxt').value;if(!t.trim()){$('#chipOut').textContent='اكتب أو الصق نصاً أولاً.';return}showCands($('#chipOut'),t,'🔬 نتيجة التحليل المحلي (بلا إنترنت ولا مفتاح):')};
+function srcFrom(txt){const seen={},out=[];
+  (txt.match(/(?:https?:)?\/\/[^\s)\]>"']+/g)||[]).forEach(function(u){
+    if(u.indexOf('//')===0)u='https:'+u;
+    const m=u.match(/[?&]uddg=([^&]+)/);if(m){try{u=decodeURIComponent(m[1])}catch(e){}}
+    let h='';try{h=new URL(u).hostname}catch(e){return}
+    if(/duckduckgo\.com|jina\.ai/.test(h)||seen[u])return;seen[u]=1;out.push(u)});
+  return out.slice(0,8)}
+async function webFree(){
+  const q=$('#q').value.trim(),out=$('#webOut'),bt=this;
+  if(!q){out.textContent='اكتب اسم الريسيفر أو رقم البوردة في خانة البحث أولاً.';return}
+  out.textContent='⏳ جارٍ البحث في الويب (بلا مفتاح)...';bt.disabled=true;
+  try{
+    const res=await fetch('https://r.jina.ai/https://html.duckduckgo.com/html/?q='+encodeURIComponent(q+' receiver board processor flash'));
+    if(!res.ok)throw new Error('HTTP '+res.status);
+    const txt=await res.text(),src=srcFrom(txt);
+    const lk=src.length?'<div class="muted" style="margin-top:8px">المصادر:</div>'+src.map(function(u){let h=u;try{h=new URL(u).hostname}catch(e){}return '<div><a href="'+esc(u)+'" target="_blank" rel="noopener noreferrer" style="color:var(--acc)">'+esc(h)+'</a></div>'}).join(''):'';
+    showCands(out,txt,'🌐 نتيجة البحث المجاني (تحليل بالكلمات المفتاحية، تحقق منها):',lk);
+  }catch(e){out.innerHTML='<div class="muted">تعذّر البحث المباشر ('+esc(e&&e.message?e.message:'خطأ')+'). استخدم أزرار محركات البحث بالأسفل، ثم الصق النص في 🧰 أدوات ← 🔬 محلل الشرائح.</div>'}
+  bt.disabled=false}
+(function(){const old=$('#bWeb').onclick;$('#bWeb').onclick=function(){if(getKey()&&getProv()==='claude')return old.call(this);return webFree.call(this)}})();
+function fillEdit(){const k=$('#dev').value,d=db[k]||{};$('#eName').value=k;$('#eBoard').value=d.board||'';$('#eProc').value=(d.proc&&d.proc!=='غير محدد')?d.proc:'';$('#eMem').value=d.mem||'';$('#eFlash').value=d.flash_ic||'';$('#ePower').value=d.power_ic||'';$('#eSig').value=d.signal_ic||'';$('#eOther').value=d.other||''}
+$('#bEditSave').onclick=function(){const k=$('#dev').value,d=db[k];if(!d)return;
+  const nn=($('#eName').value.trim()||k).toUpperCase();
+  d.board=$('#eBoard').value.trim();d.proc=$('#eProc').value.trim()||'غير محدد';d.mem=$('#eMem').value.trim();d.flash_ic=$('#eFlash').value.trim();d.power_ic=$('#ePower').value.trim();d.signal_ic=$('#eSig').value.trim();d.other=$('#eOther').value.trim();
+  if(nn!==k){if(db[nn]){alert('يوجد جهاز بهذا الاسم');return}db[nn]=d;delete db[k]}
+  if(saveDb())fillDev(nn)};
+(function(){const o=showInfo;showInfo=function(){o();try{fillEdit()}catch(e){}}})();
+
+/* ===== أفكار: القيم الذهبية + الكاميرا + الأقارب ===== */
+function mkStat(m){const g=parseFloat(m.g),v=parseFloat(m.m);if(isNaN(g)||isNaN(v))return null;
+  const dev=g===0?(v===0?0:100):(v-g)/g*100,a=Math.abs(dev);return {dev:dev,lv:a<=5?'ok':(a<=15?'warn':'bad')}}
+function mkColor(st){return !st?'#475569':(st.lv==='ok'?'#059669':(st.lv==='warn'?'#d97706':'#dc2626'))}
+function mapSummary(d){
+  const L=d.marks||[];if(!L.length)return 'المس الصورة لوضع نقاط القياس بالترتيب من المصدر إلى الحمل (أدابتر ← 5V ← 3.3V ← 1.2V).';
+  const st=L.map(mkStat),done=st.filter(Boolean).length;
+  if(!done)return 'سجّل القيم السليمة (س) من بوردة سليمة، ثم المقاسة (م) من البوردة المعطلة.';
+  const bad=[];st.forEach(function(x,i){if(x&&x.lv!=='ok')bad.push(i)});
+  if(!bad.length)return '✅ كل النقاط المقاسة ('+done+') ضمن ±5% من القيم السليمة.';
+  const f=bad[0],fm=L[f],fd=Math.round(st[f].dev);
+  let s='⚠️ نقاط شاذة: '+bad.length+' من '+done+'\n🎯 أول نقطة شاذة في السلسلة: «'+fm.t+'» ('+fm.m+' مقابل '+fm.g+'، '+(fd>0?'+':'')+fd+'%)\nابدأ فحصك منها: ما قبلها سليم، وما بعدها غالباً نتيجة لها.';
+  bad.slice(1).forEach(function(i){s+='\n• '+L[i].t+': '+L[i].m+' مقابل '+L[i].g+' ('+(Math.round(st[i].dev)>0?'+':'')+Math.round(st[i].dev)+'%)'});
+  return s}
+function mapChips(){
+  const d=db[$('#dev').value],w=$('#mapWrap'),src=(d&&d.img)||cur.url;
+  if(!src){w.innerHTML='<div class="muted" style="line-height:1.6">لا توجد صورة. أرفق صورة في تبويب التشخيص أولاً.</div>';$('#mapSum').textContent='';return}
+  w.innerHTML='<img src="'+src+'" style="width:100%;display:block;border-radius:9px">';
+  ((d&&d.marks)||[]).forEach(function(m,i){const e=document.createElement('div'),st=mkStat(m);
+    e.textContent='📍 '+m.t+((m.m!==undefined&&m.m!=='')?' · '+m.m:'');
+    e.style.cssText='position:absolute;left:'+m.x+'%;top:'+m.y+'%;transform:translate(-8px,-100%);background:'+mkColor(st)+';color:#fff;font:12px/1.3 system-ui;padding:2px 6px;border-radius:8px;white-space:nowrap';
+    e.onclick=function(ev){ev.stopPropagation();const inp=document.querySelector('[data-m="'+i+'"]');if(inp){inp.scrollIntoView({block:'center'});inp.focus()}};w.appendChild(e)});
+  $('#mapSum').textContent=mapSummary(d||{});
+}
+function mapRows(){
+  const d=db[$('#dev').value],box=$('#mapRows');
+  if(!d||!(d.marks||[]).length){box.innerHTML='';return}
+  box.innerHTML='<div class="muted" style="margin-top:8px">س = القيمة السليمة، م = المقاسة (اترك فارغاً إن لم تقس):</div>'+d.marks.map(function(m,i){
+    return '<div class="row" style="align-items:center;margin-top:6px"><span style="flex:1.3;font-size:14px">'+esc(m.t)+'</span>'
+     +'<input data-g="'+i+'" placeholder="س" inputmode="decimal" value="'+esc(m.g==null?'':m.g)+'" style="direction:ltr">'
+     +'<input data-m="'+i+'" placeholder="م" inputmode="decimal" value="'+esc(m.m==null?'':m.m)+'" style="direction:ltr">'
+     +'<button class="gray" data-up="'+i+'" style="margin:0;flex:.4;padding:8px">▲</button><button class="bad" data-mdel="'+i+'" style="margin:0;flex:.4;padding:8px">✕</button></div>'}).join('');
+  box.querySelectorAll('input').forEach(function(inp){inp.oninput=function(){const isG=inp.dataset.g!==undefined,i=+(isG?inp.dataset.g:inp.dataset.m);d.marks[i][isG?'g':'m']=inp.value.trim().replace(',','.');saveDb();mapChips()}});
+  box.querySelectorAll('[data-up]').forEach(function(b){b.onclick=function(){const i=+b.dataset.up;if(i>0){const t=d.marks[i];d.marks[i]=d.marks[i-1];d.marks[i-1]=t;saveDb();mapRender()}}});
+  box.querySelectorAll('[data-mdel]').forEach(function(b){b.onclick=function(){const i=+b.dataset.mdel;if(confirm('حذف النقطة «'+d.marks[i].t+'»؟')){d.marks.splice(i,1);saveDb();mapRender()}}});
+}
+mapRender=function(){const k=$('#dev').value;$('#mapDev').textContent=k?('الجهاز: '+k):'لا يوجد جهاز محدد';mapChips();mapRows()};
+$('#bMapClear').onclick=function(){const d=db[$('#dev').value];if(d&&d.marks){d.marks.forEach(function(m){delete m.m});saveDb();mapRender()}};
+/* الكاميرا مع الطبقة */
+let camStream=null,camS=1,camR=0,camX=0,camY=0;
+function camPaint(){$('#camOv').style.transform='translate(-50%,-50%) translate('+camX+'px,'+camY+'px) rotate('+camR+'deg) scale('+camS+')'}
+function camBuild(){
+  const d=db[$('#dev').value]||{},ov=$('#camOv');
+  ov.innerHTML='<img id="camImg" src="'+(d.img||cur.url)+'" style="width:100%;display:block;opacity:'+($('#camOp').value/100)+'">';
+  (d.marks||[]).forEach(function(m){const e=document.createElement('div'),st=mkStat(m);
+    e.textContent='📍 '+m.t+((m.g!==undefined&&m.g!=='')?' ≈'+m.g:'');
+    e.style.cssText='position:absolute;left:'+m.x+'%;top:'+m.y+'%;transform:translate(-8px,-100%);background:'+mkColor(st)+';color:#fff;font:12px/1.3 system-ui;padding:2px 6px;border-radius:8px;white-space:nowrap';ov.appendChild(e)});
+}
+async function camOpen(){
+  const d=db[$('#dev').value]||{};
+  if(!(d.img||cur.url)){alert('لا توجد صورة مرجعية للجهاز. أرفق صورة وحدد جهازاً أولاً.');return}
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){alert('الكاميرا غير مدعومة هنا. جرّب النسخة المثبّتة من Chrome.');return}
+  try{camStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false})}
+  catch(e){alert('تعذّر فتح الكاميرا. اسمح للتطبيق باستخدام الكاميرا ثم أعد المحاولة.');return}
+  $('#camV').srcObject=camStream;camS=1;camR=0;camX=0;camY=0;$('#camSc').value=100;camBuild();camPaint();$('#camBox').style.display='block';
+}
+function camClose(){if(camStream){camStream.getTracks().forEach(function(t){t.stop()});camStream=null}$('#camV').srcObject=null;$('#camBox').style.display='none'}
+$('#bCam').onclick=camOpen;$('#camX').onclick=camClose;
+$('#camOp').oninput=function(){const i=$('#camImg');if(i)i.style.opacity=this.value/100};
+$('#camSc').oninput=function(){camS=this.value/100;camPaint()};
+$('#camRot').onclick=function(){camR=(camR+90)%360;camPaint()};
+(function(){let dx=0,dy=0,on=false;const ov=$('#camOv');
+  ov.onpointerdown=function(e){on=true;dx=e.clientX-camX;dy=e.clientY-camY;try{ov.setPointerCapture(e.pointerId)}catch(x){}};
+  ov.onpointermove=function(e){if(!on)return;camX=e.clientX-dx;camY=e.clientY-dy;camPaint()};
+  ov.onpointerup=ov.onpointercancel=function(){on=false}})();
+/* أقارب البوردة */
+function procTok(p){return String(p||'').toUpperCase().match(/[A-Z]*\d{3,}[A-Z0-9]*/g)||[]}
+function grams(t){const s=norm(t),o={};for(let i=0;i+4<=s.length;i++)o[s.substr(i,4)]=1;return o}
+function jac(a,b){const u={};let n=0,i=0;Object.keys(a).forEach(function(x){u[x]=1});Object.keys(b).forEach(function(x){u[x]=1});Object.keys(u).forEach(function(x){n++;if(a[x]&&b[x])i++});return n?i/n:0}
+function kinOf(text,proc,skip){
+  const gk=grams(text),pk=procTok(proc);
+  return Object.keys(db).filter(function(x){return x!==skip}).map(function(x){const e=db[x],sc0=jac(gk,grams(x+' '+(e.board||''))),pt=procTok(e.proc);
+    return {k:x,sc:sc0+((pk.length&&pt.some(function(t){return pk.indexOf(t)>-1}))?0.5:0)}}).filter(function(r){return r.sc>=0.25}).sort(function(a,b){return b.sc-a.sc}).slice(0,3)}
+function kin(k){const d=db[k]||{};return kinOf(k+' '+(d.board||''),d.proc,k)}
+function overlapW(a,b){const A=words(a);return Array.from(words(b)).some(function(w){return A.has(w)})}
+function kinText(k,ft){
+  const d=db[k]||{};
+  if(Object.keys(d.symptoms||{}).some(function(s){return overlapW(ft,s)}))return '';
+  const R=kin(k);if(!R.length)return '';
+  let out='',n=0;
+  R.forEach(function(r){const e=db[r.k]||{};Object.keys(e.symptoms||{}).forEach(function(s){if(n<2&&overlapW(ft,s)){n++;out+='\n• «'+r.k+'»: '+s+(e.symptoms[s].diag?' ← '+e.symptoms[s].diag.split('\n')[0]:'')}})});
+  if(!out)R.slice(0,2).forEach(function(r){const ln=wsText(r.k,'').split('\n').filter(function(x){return x.indexOf('أكثر القطع')===0})[0];if(ln)out+='\n• «'+r.k+'»: '+ln});
+  return out?'\n\n👪 من بوردات قريبة في مكتبتك:'+out:''}
+function kinButtons(el,R){
+  el.innerHTML=R.length?('👪 أقارب هذه البوردة: '+R.map(function(r){return '<button class="gray" data-kin="'+esc(r.k)+'" style="margin:2px;padding:6px 10px;font-size:13px">'+esc(r.k)+' ('+Math.round(Math.min(r.sc,1)*100)+'%)</button>'}).join('')):'';
+  el.querySelectorAll('[data-kin]').forEach(function(b){b.onclick=function(){fillDev(b.dataset.kin)}})}
+(function(){const o=showInfo;showInfo=function(){o();try{kinButtons($('#kin'),kin($('#dev').value))}catch(e){}}})();
+(function(){const ob=$('#bSearch').onclick;$('#bSearch').onclick=function(){ob.call(this);
+  try{if($('#yesAdd')){const R=kinOf($('#q').value.trim(),'',null);if(R.length){const dv=document.createElement('div');dv.className='muted';dv.style.marginTop='8px';$('#addPrompt').appendChild(dv);kinButtons(dv,R)}}}catch(e){}}})();
+
+/* ===== جهاز ديناميكي بإدخال يدوي ===== */
+function findDev(raw){const n=norm(raw);if(!n)return null;return Object.keys(db).find(function(k){return norm(k)===n||norm(db[k].board)===n})||null}
+function syncDevIn(){
+  const k=$('#dev').value,d=db[k],ae=document.activeElement;
+  if(ae!==$('#devIn'))$('#devIn').value=k||'';
+  if(!(ae&&/^q(Board|Proc|Mem)$/.test(ae.id))&&!$('#devIn').dataset.nw){
+    $('#qBoard').value=d?(d.board||''):'';$('#qProc').value=(d&&d.proc&&d.proc!=='غير محدد')?d.proc:'';$('#qMem').value=d?(d.mem||''):''}}
+function devUI(){
+  const keys=Object.keys(db),cu=$('#dev').value;
+  $('#devList').innerHTML=keys.map(function(k){return '<option value="'+esc(k)+'">'+esc(db[k].board||'')+'</option>'}).join('')+keys.filter(function(k){return db[k].board&&db[k].board!==k}).map(function(k){return '<option value="'+esc(db[k].board)+'">'+esc(k)+'</option>'}).join('');
+  $('#devChips').innerHTML=keys.slice(0,14).map(function(k){return '<button class="gray" data-dc="'+esc(k)+'" style="margin:0;padding:6px 10px;font-size:13px;'+(k===cu?'background:#2563eb;':'')+'">'+esc(k)+'</button>'}).join('');
+  $('#devChips').querySelectorAll('[data-dc]').forEach(function(b){b.onclick=function(){$('#devIn').dataset.nw='';delete $('#devIn').dataset.nw;fillDev(b.dataset.dc)}});
+  syncDevIn();
+}
+(function(){const o=fillDev;fillDev=function(sel){o(sel);try{devUI()}catch(e){}}})();
+(function(){const o=showInfo;showInfo=function(){o();try{syncDevIn()}catch(e){}}})();
+$('#devIn').oninput=function(){
+  const raw=this.value.trim();if(!raw)return;
+  const key=findDev(raw);
+  if(key){delete this.dataset.nw;if($('#dev').value!==key)fillDev(key);else syncDevIn();return}
+  if(!this.dataset.nw){this.dataset.nw='1';$('#qBoard').value='';$('#qProc').value='';$('#qMem').value=''}
+  $('#devInfo').textContent='🆕 جهاز جديد غير محفوظ: «'+raw+'». أكمل المعالج والذاكرة ثم اضغط 💾 حفظ، أو ابدأ الفحص وسيُحفظ تلقائياً.';
+  $('#wsMem').textContent='';kinButtons($('#kin'),kinOf(raw,$('#qProc').value,null))};
+function ensureDev(){
+  const raw=$('#devIn').value.trim();if(!raw)return $('#dev').value;
+  const bd=$('#qBoard').value.trim(),pr=$('#qProc').value.trim(),mm=$('#qMem').value.trim();
+  let key=findDev(raw);
+  if(key){const d=db[key];if(bd&&bd!==d.board)d.board=bd;if(pr&&pr!==d.proc)d.proc=pr;if(mm&&mm!==d.mem)d.mem=mm}
+  else{key=raw.toUpperCase();db[key]={board:bd||raw,proc:pr||'غير محدد',mem:mm,symptoms:{}}}
+  saveDb();delete $('#devIn').dataset.nw;fillDev(key);return key}
+$('#bDevSave').onclick=function(){const k=ensureDev();$('#res').textContent='💾 تم حفظ الجهاز: '+k};
+(function(){const od=$('#bDiag').onclick;$('#bDiag').onclick=function(){ensureDev();return od.call(this)}})();
+devUI();
+
+/* ===== نسخة v5: إدخال يدوي + تحليل ICs + سجل بصورة ===== */
+renderAI=function(r){
+  const out=$('#aiOut'),conf={high:'عالية',medium:'متوسطة',low:'منخفضة'}[r.confidence]||'-',nv=function(x){return x?esc(x):'غير مقروء'};
+  const oth=(r.other_ics||[]).map(function(x){return typeof x==='string'?x:((x.marking||'?')+(x.role?' — '+x.role:''))});
+  out.innerHTML='<pre>🤖 نتيجة التحليل (اقتراح يحتاج تحققك):\n'
+   +'• رقم البوردة: '+nv(r.board_number)+'\n• IC الفلاش: '+nv(r.flash_ic)+'\n• IC الباور: '+nv(r.power_ic)+'\n• IC الإشارة: '+nv(r.signal_ic)+'\n'
+   +'• المعالج (الشريحة الرئيسية): '+esc(r.processor_guess||r.main_chip_marking||'غير مقروء')+'\n• الذاكرة: '+esc(r.memory_guess||'-')+'\n'
+   +'• ICs أخرى: '+(oth.length?esc(oth.join('، ')):'لا شيء ظاهر')+'\n• درجة الثقة: '+conf+'\n• نصوص مقروءة: '+esc((r.visible_text||[]).join(' / ')||'-')+'\n\n'+esc(r.notes||'')+'</pre>'
+   +'<input id="aiName" placeholder="اسم الجهاز (اختياري، مثل Truman TM HD-3)"><button class="ok full" id="bSaveAI">💾 حفظ في المكتبة (مع الصورة)</button>';
+  $('#bSaveAI').onclick=function(){
+    const nm=$('#aiName').value.trim(),bn=String(r.board_number||'').trim(),key=(nm||bn).toUpperCase();
+    if(!key){alert('اكتب اسماً للجهاز أولاً');return}
+    const ex=Object.keys(db).find(function(k){return k.toUpperCase()===key||(bn&&norm(db[k].board)===norm(bn))});
+    const k=ex||key,d=db[k]||(db[k]={board:bn||nm,proc:'غير محدد',symptoms:{}});
+    if(bn)d.board=bn;
+    if(r.processor_guess&&!r.from_lib)d.proc=r.processor_guess+' (مقترح - يحتاج تحقق)';
+    if(r.memory_guess&&!r.from_lib)d.mem=r.memory_guess;
+    if(r.flash_ic)d.flash_ic=r.flash_ic;if(r.power_ic)d.power_ic=r.power_ic;if(r.signal_ic)d.signal_ic=r.signal_ic;
+    if(oth.length)d.other=oth.join('، ');
+    if(cur.url&&!d.img)d.img=cur.url;
+    if(saveDb()){fillDev(k);$('#q').value=bn||nm;this.textContent='✅ تم الحفظ'}
+  };
+};
+runOCR=async function(){
+  const out=$('#aiOut'),bt=$('#bAI');
+  if(!cur.big){alert('أرفق صورة أولاً');return}
+  bt.disabled=true;out.textContent='⏳ تحميل محرك OCR (أول مرة يحتاج إنترنت)...';let w=null;
+  try{
+    await loadTess();w=await Tesseract.createWorker('eng');
+    const texts=[];let best={k:null,s:0};
+    for(const ang of [0,90,270,180]){
+      out.textContent='⏳ قراءة النص... (زاوية '+ang+'°)';
+      const r=await w.recognize(prepCanvas(cur.big,ang));texts.push(r.data.text||'');
+      best=matchLib(texts.join('\n'));if(best.s>=.9)break;
+    }
+    const all=texts.join('\n'),U=all.toUpperCase(),E=extractChips(all);
+    const toks=(U.match(/[A-Z0-9][A-Z0-9_.\-\/]{3,}/g)||[]);
+    const cand=toks.filter(function(t){return /[A-Z]/.test(t)&&/\d/.test(t)}).sort(function(a,b){return b.length-a.length})[0]||null;
+    const hit=best.s>=.7&&best.k?db[best.k]:null;
+    const fm=(U.match(/(?:W25Q|MX25L|GD25Q|EN25Q|EN25F|FM25Q|XM25Q|P25Q|BY25Q)[A-Z0-9]{2,}/)||[])[0]||null;
+    const sig=[],pow=[],pr=[];
+    Object.keys(E.procs).forEach(function(k){const ds=CHIPS[k]||'';if(/مفكك|تيونر/.test(ds))sig.push(k);else if(/LNB|منظم/.test(ds))pow.push(k);else pr.push(k)});
+    const role=function(k){return (CHIPS[k]||'').split(':').slice(1).join(':').trim()};
+    const oth=sig.slice(1).concat(pow.slice(1),pr.slice(1)).map(function(k){return {marking:k,role:role(k)}});
+    const mem=Object.keys(E.mems)[0]||null;
+    if(hit)fillDev(best.k);
+    renderAI({board_number:hit?(hit.board||best.k):cand,flash_ic:fm||(hit&&hit.flash_ic)||null,power_ic:pow[0]||(hit&&hit.power_ic)||null,signal_ic:sig[0]||(hit&&hit.signal_ic)||null,
+      main_chip_marking:null,processor_guess:hit?hit.proc:(pr[0]||null),memory_guess:hit?(hit.mem||null):mem,other_ics:oth,visible_text:toks.slice(0,12),from_lib:!!hit,
+      confidence:best.s>=.9?'high':best.s>=.7?'medium':'low',
+      notes:(hit?('تطابق مع «'+best.k+'» في مكتبتك (نسبة '+Math.round(best.s*100)+'%). '):'لم يُطابق أي جهاز في مكتبتك. ')+'OCR يصنّف الشرائح بقاموس محدود. للتحليل الكامل استخدم الذكاء الاصطناعي (Claude أو نموذجاً مفتوحاً) من الإعدادات.'});
+  }catch(e){out.textContent='تعذر التحليل: '+(e&&e.message?e.message:'خطأ')}
+  try{if(w)await w.terminate()}catch(e){}
+  bt.disabled=false;
+};
+/* سجل الإصلاح بصورة الريسيفر */
+function shrinkUrl(url,max,q){return new Promise(function(res){const im=new Image();im.onload=function(){const sc=Math.min(1,max/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=im.width*sc;c.height=im.height*sc;c.getContext('2d').drawImage(im,0,0,c.width,c.height);res(c.toDataURL('image/jpeg',q))};im.onerror=function(){res('')};im.src=url})}
+let arcImg='';
+$('#aImg').onchange=async function(){const f=this.files[0];if(!f){arcImg='';return}try{const im=await loadImg(f,900);arcImg=await shrinkUrl(im.url,640,.6)}catch(e){arcImg=''}};
+$('#bAddArc').onclick=async function(){
+  const m=$('#aModel').value.trim(),f=$('#aFault').value.trim();
+  if(!m||!f){alert('الموديل والعطل مطلوبان');return}
+  const rec={model:m,fault:f,part:$('#aPart').value.trim(),notes:$('#aNotes').value.trim(),date:Date.now()};
+  let img=arcImg;if(!img&&$('#aUseCur').checked&&cur.url)img=await shrinkUrl(cur.url,640,.6);
+  if(img)rec.img=img;
+  const dk=Object.keys(db).find(function(k){return k.toUpperCase()===m.toUpperCase()})||(norm($('#dev').value)===norm(m)?$('#dev').value:null),d=dk?db[dk]:null;
+  if(d){const ics=[d.flash_ic&&('فلاش '+d.flash_ic),d.power_ic&&('باور '+d.power_ic),d.signal_ic&&('إشارة '+d.signal_ic)].filter(Boolean).join(' | ');if(ics)rec.ics=ics;if(img&&!d.img)d.img=img}
+  arc.unshift(rec);
+  if(saveArc()){if(d)saveDb();['#aModel','#aFault','#aPart','#aNotes'].forEach(function(x){$(x).value=''});arcImg='';$('#aImg').value='';renderArc()}else arc.shift();
+};
+(function(){const o=showInfo;showInfo=function(){o();
+  try{const d=db[$('#dev').value]||{},L=[];if(d.flash_ic)L.push('فلاش: '+d.flash_ic);if(d.power_ic)L.push('باور: '+d.power_ic);if(d.signal_ic)L.push('إشارة: '+d.signal_ic);if(d.other)L.push('أخرى: '+d.other);
+    const e=$('#devInfo');e.style.whiteSpace='pre-line';if(L.length)e.textContent+='\n🔩 ICs — '+L.join(' | ')}catch(x){}
+  try{const R=wsRecs($('#dev').value).filter(function(a){return a.img}).slice(0,3);
+    $('#wsImgs').innerHTML=R.length?'<div style="margin-top:6px">📷 آخر إصلاحات هذه البوردة:</div>'+R.map(function(a){return '<img src="'+esc(a.img)+'" alt="" style="width:72px;height:72px;object-fit:cover;border-radius:8px;margin:4px 4px 0 0">'}).join(''):''}catch(x){}
+}})();
 fillDev();renderArc();showLens();
 </script>
 <script>if('serviceWorker' in navigator&&/^https?:/.test(location.protocol)){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){})})}</script>
